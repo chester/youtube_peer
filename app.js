@@ -24,6 +24,20 @@ var server = app.listen(process.env.PORT || 8080, function() {
 //Setup Socket
 var io = socket(server);
 
-io.on('connection', function() {
+io.on('connection', function(socket) {
 	console.log('Socket connection made');
+
+
+	socket.on('btn_clicked', function() {
+		console.log('button click recieved from client side');
+		io.emit('btn_click_recieved', {
+			
+		});
+	});
+
+	socket.on('emit_pause', function() {
+		io.emit('pause_recieved', {
+
+		});
+	});
 });
