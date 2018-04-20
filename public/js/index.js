@@ -1,5 +1,7 @@
 //Make connection from client to server 
-var socket = io.connect('http://localhost:8080');
+//var socket = io.connect('http://localhost:8080');
+var socket = io.connect('https://yt-peer.herokuapp.com');
+
 
 // Query DOM
 var testBtn = document.getElementById('sendButton');

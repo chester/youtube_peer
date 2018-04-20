@@ -10,9 +10,9 @@
   "author": "Chester Vanhuang",
   "license": "ISC",
   "dependencies": {
-    "express": "^4.16.3",
+    "express": "4.16.3",
     "express-handlebars": "^3.0.0",
-    "socket.io": "^2.1.0"
+    "socket.io": "2.1.0"
   },
   "engines": {
     "node": "8.9.4"
