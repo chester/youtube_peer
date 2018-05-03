@@ -24,6 +24,9 @@ var server = app.listen(process.env.PORT || 8080, function() {
 //Setup Socket
 var io = socket(server);
 
+var global_state = "";
+var global_current_time = 0;
+
 io.on('connection', function(socket) {
 	console.log('Socket connection made');
 
@@ -35,9 +38,36 @@ io.on('connection', function(socket) {
 		});
 	});
 
-	socket.on('emit_pause', function() {
-		io.emit('pause_recieved', {
+	socket.on('emit_play', function() {
+		io.emit('play_recieved', {
 
 		});
 	});
+
+	socket.on('emit_pause', function(data) {
+		//console.log(data);
+		io.emit('pause_recieved', {
+			time_seconds: data
+		});
+	});
+
+	socket.on('emit_buffering', function() {
+		io.emit('buffering_recieved', {
+
+		});
+	});
+
+	socket.on('get_state', function() {
+		io.emit('get_state_recieved', {
+			state: global_state,
+			time: global_current_time
+		})
+	});
+
+	socket.on('update_state', function(data) {
+		global_state = data['current_state'];
+		global_current_time = data['current_time'];
+	});
+
+
 });
