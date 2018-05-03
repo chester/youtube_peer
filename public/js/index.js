@@ -60,11 +60,13 @@ function onPlayerStateChange(event) {
 
     if( event.data == YT.PlayerState.PLAYING) {
         updateServerStateBool = true;
+        updateServerState();
         socket.emit('emit_play', {
         });
     }
 
     if( event.data == YT.PlayerState.PAUSED) {
+        updateServerState();
         socket.emit('emit_pause', {
             'current_time': player.getCurrentTime()
         });
