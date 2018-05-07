@@ -30,6 +30,10 @@ var global_current_time = 0;
 io.on('connection', function(socket) {
 	console.log('Socket connection made');
 
+	update_log = setInterval(function () {
+		console.log('State: ' + global_state);
+		console.log('Time: ' + global_current_time);
+	}, 1000);
 
 	socket.on('btn_clicked', function() {
 		console.log('button click recieved from client side');
