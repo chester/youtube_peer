@@ -1,6 +1,6 @@
 //Make connection from client to server 
-//var socket = io.connect('http://localhost:8080');
-var socket = io.connect('https://yt-peer.herokuapp.com');
+var socket = io.connect('http://localhost:8080');
+//var socket = io.connect('https://yt-peer.herokuapp.com');
 
 
 // Query DOM
@@ -25,6 +25,7 @@ function onYouTubeIframeAPIReady() {
     });
 }
 
+// Start Video Player at 0:00
 var count = 0;
 var intervalId = null;
 var time_update = function() {
@@ -39,15 +40,71 @@ var time_update = function() {
     }
 }
 
-// Emit Events
 function onPlayerReady(event) {
     console.log("Player Ready");
 
     intervalId = setInterval(time_update, 1000);
 }
 
-var updateServerStateBool = false;
+/*
+update_log = setInterval(function() {
+    console.log(player.getPlayerState());
+}, 1000)
+*/
 
+////////// Helper Methods /////////
+/*
+$('form').submit(function() {
+    // Add url to queue 
+    console.log($('#urlSubmit').val());
+    var new_url = $('#urlSubmit').val();
+    var ul = document.getElementById('url_queue');
+    var li = document.createElement('li');
+    li.appendChild(document.createTextNode(new_url));
+    ul.appendChild(li);
+    
+    // Process queue conditionally
+
+    
+    return false;
+});
+*/ 
+$("#url_form button").click(function(e) {
+    e.preventDefault();
+    if( $(this).attr("value") == 'add_queue_btn') {
+        console.log('add queue');
+        console.log($('#urlSubmit').val());
+        var new_url = $('#urlSubmit').val();
+        var ul = document.getElementById('url_queue');
+        var li = document.createElement('li');
+        li.appendChild(document.createTextNode(new_url));
+        ul.appendChild(li);
+
+    } else if( $(this).attr("value") == 'push_btn') {
+        console.log('queue btn');
+        //var queue_list = document.getElementById("url_queue");
+        //console.log(queue_list.childNodes[0]);
+        //console.log(queue_list.childElementCount);
+        var videoUrl = $('#urlSubmit').val();
+        console.log(videoUrl);
+
+        // Get ID from url
+        var split = videoUrl.split('=');
+        var videoID = split[1];
+
+        //player.loadVideoById(videoID, 0);
+        //player.pauseVideo();
+
+        // Emit new video pushed
+        socket.emit('emit_video_pushed', {
+            'pushed_url': videoID
+        });
+    } 
+})
+
+////////// Emit Events //////////
+
+var updateServerStateBool = false;
 function updateServerState() {
 
     // video has been in a started state, pass updates to server
@@ -81,12 +138,15 @@ function onPlayerStateChange(event) {
     }
 
     if( event.data == YT.PlayerState.BUFFERING) {
-        console.log('buffering');
+//        console.log('buffering');
         socket.emit('emit_buffering', {
         });
     }
-}
 
+    if( event.data == YT.PlayerState.ENDED ) {
+        
+    }
+}
 
 function getCurrentState() {
     socket.emit('get_state', {
@@ -100,10 +160,7 @@ testBtn.addEventListener('click', function() {
 });
 
 
-
-
-
-// Recieve events
+////////// Recieve events //////////
 
 socket.on('btn_click_recieved', function() {
     console.log('broadcast recieved from server side');
@@ -114,8 +171,8 @@ socket.on('play_recieved', function() {
 });
 
 socket.on('pause_recieved', function(data) {
-    console.log("pause recieved at: " + player.getCurrentTime());
-    console.log("update bool: " + updateServerStateBool);
+//    console.log("pause recieved at: " + player.getCurrentTime());
+//    console.log("update bool: " + updateServerStateBool);
     //console.log(data['time_seconds']['current_time']);
     var currentTime = data['time_seconds']['current_time'];
     player.seekTo(currentTime, true);
@@ -144,4 +201,21 @@ socket.on('get_state_recieved', function(data){
         player.pauseVideo();
         player.seekTo(0, true);
     }
+}); 
+
+socket.on('video_push_recieved', function(data) {
+    let video_id = data['video_id'];
+
+    
+    player.cueVideoById(video_id, 0);
+    player.seekTo(0, true);
+
+    player.playVideo();
+    player.pauseVideo();
+
+    player.playVideo();
+    player.pauseVideo();
+    
+    player.playVideo();
+    player.pauseVideo();
 });

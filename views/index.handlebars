@@ -10,7 +10,28 @@
 
         <div id="player"></div>
 
+        <form id="url_form"> 
+            Add video to queue<br>
+            Url:<br>
+            <input type="text" id="urlSubmit"><br>  
+            <!--<button id="add_queue_btn">Add</button>-->
+            <button type="submit" value="add_queue_btn">Add</button>
+            <button type="submit" value="push_btn">Push</button>
+
+            
+
+            
+        </form>
+
+        <div>
+            <ul id="url_queue">
+
+            </ul>
+        </div>
+
+
         <script src="https://www.youtube.com/iframe_api"></script>
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.0/jquery.min.js"></script>
         <script type="application/x-javascript" src="js/index.js" ></script>
     </body>
 

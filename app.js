@@ -73,5 +73,12 @@ io.on('connection', function(socket) {
 		global_current_time = data['current_time'];
 	});
 
+	socket.on('emit_video_pushed', function(data) {
+		//console.log(data['pushed_url'])
+		io.emit('video_push_recieved', {
+			video_id: data['pushed_url']
+		});
+	});
+
 
 });
