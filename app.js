@@ -80,5 +80,12 @@ io.on('connection', function(socket) {
 		});
 	});
 
+	socket.on('emit_video_enqueued', function(data) {
+		console.log(data);
+		io.emit('video_enqueue_recieved', {
+			urls: data['urls']
+		});
+	});
+
 
 });

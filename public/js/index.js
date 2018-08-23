@@ -1,6 +1,6 @@
 //Make connection from client to server 
-var socket = io.connect('http://localhost:8080');
-//var socket = io.connect('https://yt-peer.herokuapp.com');
+//var socket = io.connect('http://localhost:8080');
+var socket = io.connect('https://yt-peer.herokuapp.com');
 
 
 // Query DOM
@@ -12,7 +12,7 @@ function onYouTubeIframeAPIReady() {
     player = new YT.Player('player', {
         width: 600,
         height: 400,
-        videoId: 'zxwfDlhJIpw',
+        videoId: 'qfPF4KHN340',
         playerVars: {
             color: 'white',
             rel: 0
@@ -46,60 +46,73 @@ function onPlayerReady(event) {
     intervalId = setInterval(time_update, 1000);
 }
 
-/*
-update_log = setInterval(function() {
-    console.log(player.getPlayerState());
-}, 1000)
-*/
-
-////////// Helper Methods /////////
-/*
-$('form').submit(function() {
-    // Add url to queue 
-    console.log($('#urlSubmit').val());
-    var new_url = $('#urlSubmit').val();
-    var ul = document.getElementById('url_queue');
-    var li = document.createElement('li');
-    li.appendChild(document.createTextNode(new_url));
-    ul.appendChild(li);
-    
-    // Process queue conditionally
-
-    
-    return false;
-});
-*/ 
+// Handle force playing and enqueueing videos 
 $("#url_form button").click(function(e) {
     e.preventDefault();
+
+    // Add Queue Button
     if( $(this).attr("value") == 'add_queue_btn') {
-        console.log('add queue');
-        console.log($('#urlSubmit').val());
+
         var new_url = $('#urlSubmit').val();
         var ul = document.getElementById('url_queue');
-        var li = document.createElement('li');
-        li.appendChild(document.createTextNode(new_url));
-        ul.appendChild(li);
 
+        var numElems = 0;
+        $('#url_queue li').each(function() {
+            numElems++;
+        });
+
+        // If Queue empty, push directly
+        if ( numElems == 0 && (player.getPlayerState() == YT.PlayerState.ENDED) ) {
+            var videoUrl = $('#urlSubmit').val();
+            var split = videoUrl.split('=');
+            var videoID = split[1];
+            socket.emit('emit_video_pushed', {
+                'pushed_url': videoID
+            });
+        
+        // Queue Not Empty, add to queue
+        } else {
+            
+            var li = document.createElement('li');
+            li.appendChild(document.createTextNode(new_url));
+            ul.appendChild(li);
+
+            var url_list = [];
+
+            $('#url_queue li').each(function() {
+                url_list.push(
+                    $(this).text()
+                );
+            });
+
+            var url_json = url_list;
+
+            // Now pass updated queue to backend
+            socket.emit('emit_video_enqueued', {
+                'urls': url_json
+            });
+        }
+        // Clear Submit
+        document.getElementById('urlSubmit').value = "";
+
+    // Push Button
     } else if( $(this).attr("value") == 'push_btn') {
-        console.log('queue btn');
-        //var queue_list = document.getElementById("url_queue");
-        //console.log(queue_list.childNodes[0]);
-        //console.log(queue_list.childElementCount);
+        //console.log('queue btn');
+
         var videoUrl = $('#urlSubmit').val();
-        console.log(videoUrl);
 
         // Get ID from url
         var split = videoUrl.split('=');
         var videoID = split[1];
 
-        //player.loadVideoById(videoID, 0);
-        //player.pauseVideo();
-
         // Emit new video pushed
         socket.emit('emit_video_pushed', {
             'pushed_url': videoID
         });
+        // Clear Submit
+        document.getElementById('urlSubmit').value = "";
     } 
+
 })
 
 ////////// Emit Events //////////
@@ -138,12 +151,30 @@ function onPlayerStateChange(event) {
     }
 
     if( event.data == YT.PlayerState.BUFFERING) {
-//        console.log('buffering');
         socket.emit('emit_buffering', {
         });
     }
 
+
+    // Video Ended: Check Queue
     if( event.data == YT.PlayerState.ENDED ) {
+        var queue_list = document.getElementById("url_queue");
+        //console.log(queue_list.getElementsByTagName('li')[0].innerHTML);
+
+        if ( queue_list.length != 0 ) {
+            //var nextVideoURL = queue_list.childNodes[0].nodeValue;
+            var nextVideoURL = queue_list.getElementsByTagName('li')[0].innerHTML;
+            var split = nextVideoURL.split('=');
+            var videoID = split[1];
+
+            //console.log(videoID);
+
+            $('#url_queue li').first().remove();
+
+            socket.emit('emit_video_pushed', {
+                'pushed_url': videoID
+            });
+        }
         
     }
 }
@@ -153,11 +184,10 @@ function getCurrentState() {
     });
 }
 
-testBtn.addEventListener('click', function() {
-    //emit(name, data)
-    socket.emit('btn_clicked', {
-    });
-});
+//testBtn.addEventListener('click', function() {
+//    socket.emit('btn_clicked', {
+//    });
+//});
 
 
 ////////// Recieve events //////////
@@ -171,9 +201,6 @@ socket.on('play_recieved', function() {
 });
 
 socket.on('pause_recieved', function(data) {
-//    console.log("pause recieved at: " + player.getCurrentTime());
-//    console.log("update bool: " + updateServerStateBool);
-    //console.log(data['time_seconds']['current_time']);
     var currentTime = data['time_seconds']['current_time'];
     player.seekTo(currentTime, true);
     player.pauseVideo();
@@ -218,4 +245,21 @@ socket.on('video_push_recieved', function(data) {
     
     player.playVideo();
     player.pauseVideo();
+});
+
+socket.on('video_enqueue_recieved', function(data) {
+
+    var back_to_list = data['urls'];
+
+    // Code to convert back to UL
+    $('#url_queue li').remove();
+    var i = 0;
+    for( i = 0; i < back_to_list.length; i++) {
+        var new_url = back_to_list[i];
+        var ul = document.getElementById('url_queue');
+        var li = document.createElement('li');
+        li.appendChild(document.createTextNode(new_url));
+        ul.appendChild(li);
+    }
+        
 });
